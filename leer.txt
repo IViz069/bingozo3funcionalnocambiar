@@ -5,4 +5,4 @@ pip install -r requirements.txt
 
 PARA GENERAR BINGOS:
 
-py bingos.py
+py bingos.py "cantidad de bingos, sin comillas"

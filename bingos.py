@@ -1,71 +1,83 @@
 from PIL import Image , ImageDraw , ImageFont
 from random import randrange
+from datetime import datetime
 import random
 import os
-from datetime import datetime
+import sys
 
+##### VALIDACION DE ENTRADA DEL PARAMETRO DE NUMERO DE BINGOS #####
+if len(sys.argv) > 1:
+    
+    if sys.argv[1].isdigit() or sys.argv[1].isnumeric():
+        numberOfBingosToGenerate = int(sys.argv[1])
+        print("GENERANDO BINGOS\n")
+    else:
+        print("El valor pasado no es un entero.")
+        sys.exit()
+else:
+    print("No se pasó ningún valor en la línea de comandos.")
+    sys.exit()
+
+##### FUNCIONES DE UTILIDAD #####
+def print_matrix(matrix):
+    for x in range(5):
+        print(str(matrix[x]))
+
+def guardar_matriz_en_archivo(archivo, matriz, numero_bingo):
+    archivo.write(f"bingo{numero_bingo:03}\n\n")
+    archivo.write("B\tI\tN\tG\tO\n\n")
+    for fila in matriz:
+        fila_formateada = [str(x) + "\t" if x != matriz[2][2] else "\t" for x in fila]
+        archivo.write("".join(fila_formateada) + "\n")
+    archivo.write("-" * 30 + "\n\n")
+
+##### VARIABLES Y ARCHIVOS #####
 font = ImageFont.truetype("arial_black.ttf",100)
-
 dateTimeObj = datetime.now()
 timestampStr = dateTimeObj.strftime("%d-%b-%Y-%H-%M-%S")
 os.mkdir('./'+timestampStr)
 file = open("./"+timestampStr+"/bingos" + timestampStr + ".txt", "w")
-mul=270
-h=290
-v=40
-a=650#580
-r=250
+
+initialHorizontalCoordValue=250#250 is the optimal value
+initialVerticalCoordValue=650#250 is the optimal value
+increaserHorizontalCoordValue=255
+increaserVerticalCoordValue=255
+oneDigitNumberHorizontalAdjust = 30
 
 fontColor = (227,107,201)#cambiar este RGB para el cambiar el color de la fuente
+centerFontColor = (255,255,0) #color del centro
 
-cant=int(input("Ingrese la cantidad de bingos a generar: "))
-
-for c in range(cant):
+for c in range(numberOfBingosToGenerate):
     image = Image.open('img/carta.png')
-    b=random.sample(range(1, 16), 5)
-    ii=random.sample(range(16, 31), 5)
-    n=random.sample(range(31, 46), 5)
-    g=random.sample(range(46, 61), 5)
-    o=random.sample(range(61, 76), 5)
-    d = ImageDraw.Draw(image)
-    for i in range(1,6):
-        for y in range(1,6):
-            if i==1:
-                if b[y-1]<10:
-                    d.text((r+30,a), str(b[y-1]), font=font,fill=fontColor)
-                else:
-                    d.text((r,a), str(b[y-1]), font=font,fill=fontColor)
-            if i==2:
-                d.text((r,a), str(ii[y-1]), font=font,fill=fontColor)
-            if i==3:
-                if y==3:
-                    d.text((r,a), "", font=font,fill=(255,255,0))
-                else:
-                    d.text((r,a), str(n[y-1]), font=font,fill=fontColor)
-            if i==4:
-                d.text((r,a), str(g[y-1]), font=font,fill=fontColor)
-            if i==5:
-                d.text((r,a), str(o[y-1]), font=font,fill=fontColor)
-            a=a+260
-        a=650
-        r=r+255
-    a=650
-    r=250
-    image.save('./'+timestampStr+'/bingo' + str('{:0>3}'.format(c))+ '.png')
-    file.write('bingo' + str('{:0>3}'.format(c)) + os.linesep)
-    file.write("B   I   N   G   O" + os.linesep)
-    cc=1
-    for k in range(1,6):
-        if k==3:
-            if cc==3 and b[k-1]<10:
-                file.write(str(b[k-1])+ "   " + str(ii[k-1])+ "      "  + str(g[k-1])+ "  " + str(o[k-1])+ "  " + os.linesep)
+
+    imageDraw = ImageDraw.Draw(image)
+    
+    original_matrix = [random.sample(range(i, i + 15), 5) for i in range(1, 76, 15)]
+    transposed_matrix = [[fila[i] for fila in original_matrix] for i in range(len(original_matrix[0]))]
+    
+    print_matrix(transposed_matrix)
+
+    for x in range(5):
+        for y in range(5):
+
+            if transposed_matrix[x][y] < 10:
+                imageDraw.text((initialHorizontalCoordValue + oneDigitNumberHorizontalAdjust, initialVerticalCoordValue), str(transposed_matrix[x][y]), font=font,fill=fontColor)
+            elif x == 2 and y == 2:
+                imageDraw.text((initialHorizontalCoordValue, initialVerticalCoordValue), str(""), font=font,fill=centerFontColor)
             else:
-                file.write(str(b[k-1])+ "  " + str(ii[k-1])+ "      "  + str(g[k-1])+ "  " + str(o[k-1])+ "  " + os.linesep)
-        elif b[k-1]<10:
-            file.write(str(b[k-1])+ "   " + str(ii[k-1])+ "  " + str(n[k-1])+ "  " + str(g[k-1])+ "  " + str(o[k-1])+ "  " + os.linesep)
-        else:
-            file.write(str(b[k-1])+ "  " + str(ii[k-1])+ "  " + str(n[k-1])+ "  " + str(g[k-1])+ "  " + str(o[k-1])+ "  " + os.linesep)
-        cc=cc+1
-    file.write("--------------------------------" + os.linesep)
-    print("Bingo " + str('{:0>3}'.format(c))+ " generado")
+                imageDraw.text((initialHorizontalCoordValue, initialVerticalCoordValue), str(transposed_matrix[x][y]), font=font,fill=fontColor)
+        
+            initialHorizontalCoordValue = initialHorizontalCoordValue + increaserHorizontalCoordValue
+        
+        initialVerticalCoordValue = initialVerticalCoordValue + increaserVerticalCoordValue
+            
+        initialHorizontalCoordValue = 250
+
+    initialVerticalCoordValue = 650
+
+    image.save('./'+timestampStr+'/bingo' + str('{:0>3}'.format(c+1))+ '.png')
+    
+    guardar_matriz_en_archivo(file, transposed_matrix, c+1)
+
+    print("Bingo " + str('{:0>3}'.format(c+1))+ " generado\n")
 file.close()
